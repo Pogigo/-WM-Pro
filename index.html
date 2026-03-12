@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> – Naga Church Media Team</title>
+  <meta name="description"
+    content="Batch watermark up to 300 images at once. Drag, resize, rotate and set opacity of your watermark, then download all images in a ZIP." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <!-- ── HEADER ── -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="url(#bg)" />
+          <path d="M6 22l6-8 5 6 3-4 6 6H6z" fill="#fff" opacity=".8" />
+          <circle cx="22" cy="10" r="3" fill="#fff" opacity=".9" />
+          <path d="M14 18l4-5 5 7" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".5" />
+          <defs>
+            <linearGradient id="bg" x1="0" y1="0" x2="32" y2="32">
+              <stop stop-color="#4f8ef7" />
+              <stop offset="1" stop-color="#2450c8" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="brand-name">Naga Church<span class="brand-pro">Media Team</span></span>
+      </div>
+      <nav class="header-steps">
+        <span class="step-pill active" id="step-pill-1"><span class="step-num">1</span> Upload</span>
+        <svg width="20" height="20" viewBox="0 0 20 20">
+          <path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />
+        </svg>
+        <span class="step-pill" id="step-pill-2"><span class="step-num">2</span> Customize</span>
+        <svg width="20" height="20" viewBox="0 0 20 20">
+          <path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />
+        </svg>
+        <span class="step-pill" id="step-pill-3"><span class="step-num">3</span> Download</span>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── TOAST ── -->
+  <div class="toast" id="toast">
+    <svg viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd"
+        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+        clip-rule="evenodd" />
+    </svg>
+    <span id="toast-msg"></span>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       STAGE 1 – UPLOAD
+  ═══════════════════════════════════════ -->
+  <main class="stage" id="stage-upload">
+    <div class="stage-content upload-grid">
+
+        <p class="hero-sub">Upload up to 300 images &amp; position your watermark · Download all in one ZIP</p>
+        <div class="requirement-chip">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clip-rule="evenodd" />
+          </svg>
+          All images must be landscape format (width &gt; height)
+        </div>
+      </div>
+
+      <!-- Upload Images -->
+      <div class="upload-card" id="drop-images" role="button" tabindex="0" aria-label="Upload images dropzone">
+        <div class="upload-card-inner">
+          <div class="upload-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 16V8m0 0l-3 3m3-3l3 3" stroke-linecap="round" stroke-linejoin="round" />
+              <rect x="3" y="3" width="18" height="18" rx="4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div class="upload-label">1. Upload Images</div>
+          <div class="upload-hint">Drop images here</div>
+          <div class="upload-sub">or click to browse <span class="accent">(multiple files supported)</span></div>
+          <div class="upload-limit">Max 300 images · Landscape required</div>
+          <input type="file" id="input-images" accept="image/*" multiple hidden />
+          <div class="upload-badge" id="badge-images" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <!-- Upload Watermark -->
+      <div class="upload-card" id="drop-watermark" role="button" tabindex="0" aria-label="Upload watermark dropzone">
+        <div class="upload-card-inner">
+          <div class="upload-icon-wrap wm-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="4" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M3 15l5-5 4 4 3-3 6 6" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+            </svg>
+          </div>
+          <div class="upload-label">2. Upload Watermark</div>
+          <div class="upload-hint">Drop logo here</div>
+          <div class="upload-sub"><span class="accent">PNG with transparency recommended</span></div>
+          <div class="upload-limit">1–2 watermark images</div>
+          <input type="file" id="input-watermark" accept="image/*" multiple hidden />
+          <div class="upload-badge" id="badge-watermark" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <!-- Proceed button (appears when both are ready) -->
+      <div class="proceed-row" id="proceed-row">
+        <button class="btn-proceed" id="btn-proceed" disabled>
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
+              clip-rule="evenodd" />
+          </svg>
+          Preview &amp; Customize Watermark
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ═══════════════════════════════════════
+       STAGE 2 – CUSTOMIZE & PREVIEW
+  ═══════════════════════════════════════ -->
+  <main class="stage hidden" id="stage-preview">
+    <div class="stage-content preview-layout-two-col">
+
+      <!-- Left Column -->
+      <div class="preview-sidebar">
+        <!-- Watermark card -->
+        <div class="info-card" id="wm-card">
+          <div class="info-card-header">
+            <span class="info-card-label">2. Upload Watermark</span>
+            <span class="info-badge" id="badge-wm-count"></span>
+          </div>
+          <div class="wm-preview-wrap">
+            <img id="wm-thumb" src="" alt="Watermark preview" />
+          </div>
+          <div class="wm-toggle" id="wm-toggle"></div>
+        </div>
+
+        <!-- Images card -->
+        <div class="info-card" id="img-card">
+          <div class="info-card-header">
+            <span class="info-card-label">1. Upload Images</span>
+            <span class="info-badge" id="badge-img-count"></span>
+          </div>
+          <div class="img-preview-wrap">
+            <img id="img-thumb" src="" alt="First uploaded image" />
+          </div>
+        </div>
+
+        <!-- Action bar -->
+        <div class="action-bar" style="margin-top: 10px;">
+          <button class="btn-download" id="btn-download">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                clip-rule="evenodd" />
+            </svg>
+            Download All Images
+            <span class="download-count" id="download-count"></span>
+          </button>
+          <button class="btn-reset" id="btn-reset" title="Reset everything">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="preview-main">
+        <div class="preview-header-minimal"
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span class="preview-eyebrow" style="margin: 0;">PREVIEW IMAGES <span class="drag-hint"
+              style="color: #fff;">(drag watermark)</span></span>
+          <button class="btn-back" id="btn-back">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                clip-rule="evenodd" />
+            </svg>
+            Back
+          </button>
+        </div>
+
+        <!-- Canvas area -->
+        <div class="canvas-wrapper" id="canvas-wrapper">
+          <canvas id="preview-canvas"></canvas>
+          <div class="canvas-overlay" id="canvas-overlay"></div>
+        </div>
+
+        <!-- Customize Controls -->
+        <div class="controls-card" style="margin-top: 16px;">
+          <div class="controls-title">3. Customize Watermark</div>
+
+          <div class="control-group">
+            <label class="control-label">Position</label>
+            <div class="position-display" id="position-display">Click and drag the watermark on the preview to position
+              it</div>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label" for="slider-size">
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <path
+                  d="M3 12V4a1 1 0 011-1h4a1 1 0 011 1v1h1V4a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h4a2 2 0 002-2v-1h-1v1a1 1 0 01-1 1H4a1 1 0 01-1-1z" />
+                <path d="M8 7.5A.5.5 0 018.5 7h5a.5.5 0 010 1h-5A.5.5 0 018 7.5z" />
+                <path
+                  d="M12.854 5.146a.5.5 0 010 .708l-1.5 1.5a.5.5 0 01-.707-.708L11.793 5.5l-1.146-1.146a.5.5 0 01.707-.708l1.5 1.5z" />
+              </svg>
+              Size: <span id="label-size">20%</span>
+            </label>
+            <input type="range" id="slider-size" class="slider" min="5" max="80" value="20" />
+          </div>
+
+          <div class="control-group">
+            <label class="control-label" for="slider-rotation">
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 104.546 2.914.5.5 0 00-.908-.418A4 4 0 118 4V3z" />
+                <path
+                  d="M8 4.466V.534a.25.25 0 01.41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 018 4.466z" />
+              </svg>
+              Rotation: <span id="label-rotation">0°</span>
+            </label>
+            <input type="range" id="slider-rotation" class="slider" min="0" max="360" value="0" />
+          </div>
+
+          <div class="control-group">
+            <label class="control-label" for="slider-opacity">
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 15A7 7 0 118 1a7 7 0 010 14zm0 1A8 8 0 108 0a8 8 0 000 16z" />
+                <path d="M8 13A5 5 0 118 3a5 5 0 010 10zm0 1A6 6 0 108 2a6 6 0 000 12z" opacity=".5" />
+              </svg>
+              Opacity: <span id="label-opacity">80%</span>
+            </label>
+            <input type="range" id="slider-opacity" class="slider" min="5" max="100" value="80" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress overlay -->
+      <div class="progress-overlay hidden" id="progress-overlay">
+        <div class="progress-box">
+          <div class="progress-spinner"></div>
+          <div class="progress-text" id="progress-text">Processing images…</div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+          </div>
+          <div class="progress-sub" id="progress-sub">0 / 0</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

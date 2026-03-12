@@ -21,7 +21,7 @@ const state = {
     startX: 0, startY: 0,
     startWmX: 0, startWmY: 0,
   },
-
+  batchCount: 0,
 };
 
 /* Constants */
@@ -40,6 +40,7 @@ const inputWm = $('input-watermark');
 const badgeImages = $('badge-images');
 const badgeWm = $('badge-watermark');
 const btnProceed = $('btn-proceed');
+const btnResetUpload = $('btn-reset-upload');
 const btnBack = $('btn-back');
 const btnReset = $('btn-reset');
 const btnDownload = $('btn-download');
@@ -65,6 +66,9 @@ const progressSub = $('progress-sub');
 const stepPills = document.querySelectorAll('.step-pill');
 const toastEl = $('toast');
 const toastMsg = $('toast-msg');
+const wmHistoryContainer = $('wm-history-container');
+const wmHistoryList = $('wm-history-list');
+const btnClearHistory = $('btn-clear-history');
 
 /* ─── TOAST ─────────────────────────────────────────────── */
 let toastTimer = null;
@@ -75,6 +79,59 @@ function showToast(msg, type = 'error') {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toastEl.classList.remove('show'), 4000);
 }
+
+/* ─── WATERMARK HISTORY ─────────────────────────────────── */
+function loadWmHistory() {
+  const history = JSON.parse(localStorage.getItem('wmHistory') || '[]');
+  if (history.length === 0) {
+    wmHistoryContainer.style.display = 'none';
+    return;
+  }
+  wmHistoryContainer.style.display = 'block';
+  wmHistoryList.innerHTML = '';
+  history.forEach(dataUrl => {
+    const item = document.createElement('div');
+    item.className = 'wm-history-item';
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    item.appendChild(img);
+    item.addEventListener('click', async () => {
+      try {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], "history_wm.png", { type: blob.type });
+        handleWatermarkFiles([file]);
+      } catch (e) {
+        showToast("Could not load history item.");
+      }
+    });
+    wmHistoryList.appendChild(item);
+  });
+}
+
+function saveToWmHistory(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    let history = JSON.parse(localStorage.getItem('wmHistory') || '[]');
+    const dataUrl = e.target.result;
+    history = history.filter(url => url !== dataUrl);
+    history.unshift(dataUrl);
+    history = history.slice(0, 5); // Keep last 5
+    localStorage.setItem('wmHistory', JSON.stringify(history));
+    loadWmHistory();
+  };
+  reader.readAsDataURL(file);
+}
+
+if (btnClearHistory) {
+  btnClearHistory.addEventListener('click', () => {
+    localStorage.removeItem('wmHistory');
+    loadWmHistory();
+  });
+}
+
+// Initial load
+loadWmHistory();
 
 /* ─── IMAGE LOADER ──────────────────────────────────────── */
 function loadImage(file) {
@@ -161,8 +218,9 @@ async function handleWatermarkFiles(files) {
 
   const toAdd = loaded.slice(0, remainingSlots);
   state.watermarks.push(...toAdd);
-  toAdd.forEach(() => {
+  toAdd.forEach((entry) => {
     state.wms.push({ xRatio: null, yRatio: null, sizeRatio: 0.20, opacity: 0.80, rotation: 0 });
+    saveToWmHistory(entry.file);
   });
   state.activeWmIdx = state.watermarks.length - 1; // set newly added as active
   updateWatermarkUI();
@@ -178,7 +236,16 @@ function updateWatermarkUI() {
 
 /* ─── PROCEED CHECK ─────────────────────────────────────── */
 function checkProceed() {
-  btnProceed.disabled = !(state.images.length > 0 && state.watermarks.length > 0);
+  const hasImages = state.images.length > 0;
+  const hasWm = state.watermarks.length > 0;
+
+  btnProceed.disabled = !(hasImages && hasWm);
+
+  if (hasImages || hasWm) {
+    btnResetUpload.style.display = 'flex';
+  } else {
+    btnResetUpload.style.display = 'none';
+  }
 }
 
 /* ─── GO TO PREVIEW ─────────────────────────────────────── */
@@ -436,10 +503,13 @@ async function downloadAll() {
   progressOverlay.classList.remove('hidden');
   progressText.textContent = 'Processing images…';
 
+  state.batchCount++;
+  const batchName = `[WM] Images [${state.batchCount}]`;
+
   const wm = state.watermarks[state.activeWmIdx].img;
   const total = state.images.length;
   const zip = new JSZip();
-  const folder = zip.folder('[WM] Images');
+  const folder = zip.folder(batchName);
 
   // Use an off-screen canvas for batch processing
   const offCanvas = document.createElement('canvas');
@@ -480,9 +550,9 @@ async function downloadAll() {
     });
 
     // Convert to base64 and add to zip
-    const dataUrl = offCanvas.toDataURL('image/jpeg', 0.92);
+    const dataUrl = offCanvas.toDataURL('image/png');
     const base64Data = dataUrl.split(',')[1];
-    const ext = 'jpg';
+    const ext = 'png';
     const name = `[WM] Images ${i + 1}.${ext}`;
     folder.file(name, base64Data, { base64: true });
 
@@ -500,7 +570,7 @@ async function downloadAll() {
 
   progressFill.style.width = '100%';
   const finalBlob = new Blob([zipBlob], { type: 'application/zip' });
-  saveAs(finalBlob, '[WM] Images.zip');
+  saveAs(finalBlob, `${batchName}.zip`);
 
   await new Promise(r => setTimeout(r, 600));
   progressOverlay.classList.add('hidden');
@@ -529,6 +599,7 @@ function resetAll() {
   dropImages.classList.remove('has-files');
   dropWatermark.classList.remove('has-files');
   btnProceed.disabled = true;
+  btnResetUpload.style.display = 'none';
 
   // Show upload stage
   stagePreview.classList.add('hidden');
@@ -560,6 +631,11 @@ makeDrop(dropWatermark, inputWm, handleWatermarkFiles);
 
 /* ─── WIRE UP BUTTONS ───────────────────────────────────── */
 btnProceed.addEventListener('click', goToPreview);
+if (btnResetUpload) {
+  btnResetUpload.addEventListener('click', () => {
+    if (confirm('Clear uploaded files and start over?')) resetAll();
+  });
+}
 btnBack.addEventListener('click', () => {
   stagePreview.classList.add('hidden');
   stageUpload.classList.remove('hidden');

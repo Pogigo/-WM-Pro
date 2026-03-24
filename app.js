@@ -704,14 +704,7 @@ inputImagesFolder.addEventListener('change', () => handleImageFiles(inputImagesF
 btnBrowseFiles.addEventListener('click', e => { e.stopPropagation(); inputImages.click(); });
 btnBrowseFolder.addEventListener('click', e => { e.stopPropagation(); inputImagesFolder.click(); });
 
-// Allow clicking the dropzone area (not on buttons) to open file picker
-dropImages.addEventListener('click', e => {
-  if (e.target.closest('.upload-mode-btn')) return; // Don't double-trigger from button clicks
-  inputImages.click();
-});
-dropImages.addEventListener('keydown', e => {
-  if (e.key === 'Enter' || e.key === ' ') inputImages.click();
-});
+
 
 /* ─── WIRE UP BUTTONS ───────────────────────────────────── */
 btnProceed.addEventListener('click', goToPreview);

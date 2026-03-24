@@ -69,19 +69,39 @@ const progressSub = $('progress-sub');
 const stepPills = document.querySelectorAll('.step-pill');
 const toastEl = $('toast');
 const toastMsg = $('toast-msg');
+const errorBanner = $('error-banner');
+const errorBannerMsg = $('error-banner-msg');
+const errorBannerClose = $('error-banner-close');
 const wmHistoryContainer = $('wm-history-container');
 const wmHistoryList = $('wm-history-list');
 const btnClearHistory = $('btn-clear-history');
 
-/* ─── TOAST ─────────────────────────────────────────────── */
+/* ─── TOAST (success only) ─────────────────────────────── */
 let toastTimer = null;
-function showToast(msg, type = 'error') {
-  toastEl.className = 'toast ' + type;
+function showToast(msg, type = 'success') {
+  if (type === 'error') {
+    // Use error banner for errors
+    showErrorBanner(msg);
+    return;
+  }
+  toastEl.className = 'toast';
   toastMsg.textContent = msg;
   toastEl.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toastEl.classList.remove('show'), 4000);
 }
+
+/* ─── ERROR BANNER ─────────────────────────────────────── */
+function showErrorBanner(msg) {
+  errorBannerMsg.textContent = msg;
+  errorBanner.classList.add('show');
+}
+
+function hideErrorBanner() {
+  errorBanner.classList.remove('show');
+}
+
+errorBannerClose.addEventListener('click', hideErrorBanner);
 
 /* ─── WATERMARK HISTORY ─────────────────────────────────── */
 function loadWmHistory() {
@@ -105,7 +125,7 @@ function loadWmHistory() {
         const file = new File([blob], "history_wm.png", { type: blob.type });
         handleWatermarkFiles([file]);
       } catch (e) {
-        showToast("Could not load history item.");
+        showToast("Could not load history item.", 'error');
       }
     });
     wmHistoryList.appendChild(item);
@@ -210,12 +230,12 @@ async function handleImageFiles(files) {
   // Enforce max 300 total
   const room = MAX_IMAGES - state.images.length;
   if (room <= 0) {
-    showToast(`Already at maximum ${MAX_IMAGES} images.`);
+    showToast(`Already at maximum ${MAX_IMAGES} images.`, 'error');
     return;
   }
   const toAdd = arr.slice(0, room);
   if (arr.length > room) {
-    showToast(`Only ${room} more image(s) can be added (max ${MAX_IMAGES}).`);
+    showToast(`Only ${room} more image(s) can be added (max ${MAX_IMAGES}).`, 'error');
   }
 
   // Load images
@@ -223,7 +243,7 @@ async function handleImageFiles(files) {
   try {
     loaded = await Promise.all(toAdd.filter(f => f.type.startsWith('image/')).map(loadImage));
   } catch (e) {
-    showToast('Some images could not be loaded.');
+    showToast('Some images could not be loaded.', 'error');
     return;
   }
 
@@ -236,12 +256,14 @@ async function handleImageFiles(files) {
       // Revoke blob URLs for rejected images
       loaded.forEach(e => URL.revokeObjectURL(e.url));
       showToast(
-        `All images must be landscape format.\nPortrait or square image detected: "${entry.file.name}".`
+        `All images must be landscape format. Portrait or square image detected: "${entry.file.name}".`, 'error'
       );
       return;
     }
   }
 
+  // Valid images loaded — dismiss any error banner
+  hideErrorBanner();
   state.images.push(...loaded);
   updateImageUI();
 }
@@ -263,14 +285,14 @@ async function handleWatermarkFiles(files) {
   try {
     loaded = await Promise.all(arr.map(loadImage));
   } catch (e) {
-    showToast('Watermark image could not be loaded.');
+    showToast('Watermark image could not be loaded.', 'error');
     return;
   }
 
   // Rather than resetting, we append to the existing array up to MAX_WATERMARKS
   const remainingSlots = MAX_WATERMARKS - state.watermarks.length;
   if (remainingSlots <= 0) {
-    showToast(`You can only upload up to ${MAX_WATERMARKS} watermarks.`);
+    showToast(`You can only upload up to ${MAX_WATERMARKS} watermarks.`, 'error');
     return;
   }
 

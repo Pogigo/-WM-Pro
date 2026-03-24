@@ -36,6 +36,9 @@ const stagePreview = $('stage-preview');
 const dropImages = $('drop-images');
 const dropWatermark = $('drop-watermark');
 const inputImages = $('input-images');
+const inputImagesFolder = $('input-images-folder');
+const btnBrowseFiles = $('btn-browse-files');
+const btnBrowseFolder = $('btn-browse-folder');
 const inputWm = $('input-watermark');
 const badgeImages = $('badge-images');
 const badgeWm = $('badge-watermark');
@@ -142,6 +145,61 @@ function loadImage(file) {
     img.onerror = () => reject(new Error(`Failed to load: ${file.name}`));
     img.src = url;
   });
+}
+
+/* ─── FOLDER READING HELPERS ────────────────────────────── */
+function readEntryAsFile(entry) {
+  return new Promise((resolve, reject) => {
+    entry.file(resolve, reject);
+  });
+}
+
+function readEntriesFromReader(reader) {
+  return new Promise((resolve, reject) => {
+    reader.readEntries(resolve, reject);
+  });
+}
+
+async function getAllFilesFromEntry(entry) {
+  if (entry.isFile) {
+    const file = await readEntryAsFile(entry);
+    return file.type.startsWith('image/') ? [file] : [];
+  }
+  if (entry.isDirectory) {
+    const reader = entry.createReader();
+    let allFiles = [];
+    // readEntries may only return a batch at a time, so loop
+    let batch;
+    do {
+      batch = await readEntriesFromReader(reader);
+      for (const child of batch) {
+        const files = await getAllFilesFromEntry(child);
+        allFiles = allFiles.concat(files);
+      }
+    } while (batch.length > 0);
+    return allFiles;
+  }
+  return [];
+}
+
+async function extractFilesFromDrop(dataTransfer) {
+  const items = dataTransfer.items;
+  if (!items) return Array.from(dataTransfer.files);
+
+  const entries = [];
+  for (let i = 0; i < items.length; i++) {
+    const entry = items[i].webkitGetAsEntry ? items[i].webkitGetAsEntry() : null;
+    if (entry) entries.push(entry);
+  }
+
+  if (entries.length === 0) return Array.from(dataTransfer.files);
+
+  let allFiles = [];
+  for (const entry of entries) {
+    const files = await getAllFilesFromEntry(entry);
+    allFiles = allFiles.concat(files);
+  }
+  return allFiles;
 }
 
 /* ─── UPLOAD — IMAGES ───────────────────────────────────── */
@@ -591,6 +649,7 @@ function resetAll() {
 
   // Reset file inputs
   inputImages.value = '';
+  inputImagesFolder.value = '';
   inputWm.value = '';
 
   // Reset badges & cards
@@ -612,22 +671,47 @@ function resetAll() {
 }
 
 /* ─── DROPZONE HELPERS ──────────────────────────────────── */
-function makeDrop(zone, input, handler) {
-  zone.addEventListener('click', () => input.click());
-  zone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') input.click(); });
+function makeDrop(zone, input, handler, { supportsFolder = false } = {}) {
+  // Only set click-to-browse on the zone if there are NO separate browse buttons
+  if (!supportsFolder) {
+    zone.addEventListener('click', () => input.click());
+    zone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') input.click(); });
+  }
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-  zone.addEventListener('drop', e => {
+  zone.addEventListener('drop', async e => {
     e.preventDefault();
     zone.classList.remove('drag-over');
-    handler(e.dataTransfer.files);
+    if (supportsFolder) {
+      // Use entry-based reading so dropped folders are recursively traversed
+      const files = await extractFilesFromDrop(e.dataTransfer);
+      handler(files);
+    } else {
+      handler(e.dataTransfer.files);
+    }
   });
   input.addEventListener('change', () => handler(input.files));
 }
 
 /* ─── WIRE UP DROP ZONES ────────────────────────────────── */
-makeDrop(dropImages, inputImages, handleImageFiles);
+makeDrop(dropImages, inputImages, handleImageFiles, { supportsFolder: true });
 makeDrop(dropWatermark, inputWm, handleWatermarkFiles);
+
+// Folder input change handler
+inputImagesFolder.addEventListener('change', () => handleImageFiles(inputImagesFolder.files));
+
+// Browse buttons
+btnBrowseFiles.addEventListener('click', e => { e.stopPropagation(); inputImages.click(); });
+btnBrowseFolder.addEventListener('click', e => { e.stopPropagation(); inputImagesFolder.click(); });
+
+// Allow clicking the dropzone area (not on buttons) to open file picker
+dropImages.addEventListener('click', e => {
+  if (e.target.closest('.upload-mode-btn')) return; // Don't double-trigger from button clicks
+  inputImages.click();
+});
+dropImages.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') inputImages.click();
+});
 
 /* ─── WIRE UP BUTTONS ───────────────────────────────────── */
 btnProceed.addEventListener('click', goToPreview);

@@ -86,10 +86,21 @@
           </svg>
         </div>
         <div class="upload-label">1. Upload Images</div>
-        <div class="upload-hint">Drop images here</div>
-        <div class="upload-sub">or click to browse <span class="accent">(multiple files supported)</span></div>
+        <div class="upload-hint">Drop images or a folder here</div>
+        <div class="upload-sub">or click to browse <span class="accent">(multiple files & folders supported)</span></div>
+        <div class="upload-btn-row">
+          <button type="button" class="upload-mode-btn" id="btn-browse-files">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+            Browse Files
+          </button>
+          <button type="button" class="upload-mode-btn folder-btn" id="btn-browse-folder">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+            Browse Folder
+          </button>
+        </div>
         <div class="upload-limit">Max 300 images · Landscape required</div>
         <input type="file" id="input-images" accept="image/*" multiple hidden />
+        <input type="file" id="input-images-folder" webkitdirectory multiple hidden />
         <div class="upload-badge" id="badge-images" aria-live="polite"></div>
       </div>
     </div>

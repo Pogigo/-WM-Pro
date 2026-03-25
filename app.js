@@ -22,6 +22,7 @@ const state = {
     startWmX: 0, startWmY: 0,
   },
   batchCount: 0,
+  uploadedFolderName: null,
 };
 
 /* Constants */
@@ -204,7 +205,7 @@ async function getAllFilesFromEntry(entry) {
 
 async function extractFilesFromDrop(dataTransfer) {
   const items = dataTransfer.items;
-  if (!items) return Array.from(dataTransfer.files);
+  if (!items) return { files: Array.from(dataTransfer.files), folderName: null };
 
   const entries = [];
   for (let i = 0; i < items.length; i++) {
@@ -212,14 +213,16 @@ async function extractFilesFromDrop(dataTransfer) {
     if (entry) entries.push(entry);
   }
 
-  if (entries.length === 0) return Array.from(dataTransfer.files);
+  if (entries.length === 0) return { files: Array.from(dataTransfer.files), folderName: null };
 
   let allFiles = [];
+  let folderName = null;
   for (const entry of entries) {
+    if (entry.isDirectory && !folderName) folderName = entry.name;
     const files = await getAllFilesFromEntry(entry);
     allFiles = allFiles.concat(files);
   }
-  return allFiles;
+  return { files: allFiles, folderName };
 }
 
 /* ─── UPLOAD — IMAGES ───────────────────────────────────── */
@@ -584,7 +587,9 @@ async function downloadAll() {
   progressText.textContent = 'Processing images…';
 
   state.batchCount++;
-  const batchName = `[WM] Images [${state.batchCount}]`;
+  const batchName = state.uploadedFolderName
+    ? `[WM] ${state.uploadedFolderName}`
+    : `[WM] Images [${state.batchCount}]`;
 
   const wm = state.watermarks[state.activeWmIdx].img;
   const total = state.images.length;
@@ -668,6 +673,7 @@ function resetAll() {
   state.watermarks = [];
   state.wms = [];
   state.activeWmIdx = 0;
+  state.uploadedFolderName = null;
 
   // Reset file inputs
   inputImages.value = '';
@@ -706,8 +712,9 @@ function makeDrop(zone, input, handler, { supportsFolder = false } = {}) {
     zone.classList.remove('drag-over');
     if (supportsFolder) {
       // Use entry-based reading so dropped folders are recursively traversed
-      const files = await extractFilesFromDrop(e.dataTransfer);
-      handler(files);
+      const result = await extractFilesFromDrop(e.dataTransfer);
+      if (result.folderName) state.uploadedFolderName = result.folderName;
+      handler(result.files);
     } else {
       handler(e.dataTransfer.files);
     }
@@ -720,7 +727,14 @@ makeDrop(dropImages, inputImages, handleImageFiles, { supportsFolder: true });
 makeDrop(dropWatermark, inputWm, handleWatermarkFiles);
 
 // Folder input change handler
-inputImagesFolder.addEventListener('change', () => handleImageFiles(inputImagesFolder.files));
+inputImagesFolder.addEventListener('change', () => {
+  const files = inputImagesFolder.files;
+  if (files.length > 0 && files[0].webkitRelativePath) {
+    const parts = files[0].webkitRelativePath.split('/');
+    if (parts.length > 1) state.uploadedFolderName = parts[0];
+  }
+  handleImageFiles(files);
+});
 
 // Browse buttons
 btnBrowseFiles.addEventListener('click', e => { e.stopPropagation(); inputImages.click(); });

@@ -634,15 +634,13 @@ async function downloadAll() {
       offCtx.restore();
     });
 
-    // Convert to base64 and add to zip
-    const dataUrl = offCanvas.toDataURL('image/png');
-    const base64Data = dataUrl.split(',')[1];
-    const ext = 'png';
-    const name = `[WM] Images ${i + 1}.${ext}`;
-    folder.file(name, base64Data, { base64: true });
+    // Convert to blob asynchronously (non-blocking) and add to zip
+    const blob = await new Promise(resolve => offCanvas.toBlob(resolve, 'image/jpeg', 0.92));
+    const name = `[WM] Images ${i + 1}.jpg`;
+    folder.file(name, blob);
 
-    // Yield to browser occasionally to keep UI responsive
-    if (i % 5 === 0) await new Promise(r => setTimeout(r, 0));
+    // Yield after every image to keep UI responsive
+    await new Promise(r => setTimeout(r, 0));
   }
 
   progressText.textContent = 'Creating ZIP file…';
